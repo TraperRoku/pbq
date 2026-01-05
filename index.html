@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Osobowości PBQ (126 pytań)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        h1 { text-align: center; color: var(--text); margin-bottom: 10px; }
+        p.intro { text-align: center; color: #64748b; margin-bottom: 40px; }
+        
+        .question-item {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .question-text {
+            font-size: 1.05rem;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+        .option-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+        .scale-val {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f5f9;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        input[type="radio"] { display: none; }
+        input[type="radio"]:checked + .scale-val {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+        .scale-desc {
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 4px;
+            color: #64748b;
+        }
+
+        button#calc-btn {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 40px;
+            transition: background 0.3s;
+        }
+        button#calc-btn:hover { background: #334155; }
+
+        /* Sekcja wyników */
+        #results-section {
+            display: none;
+            margin-top: 50px;
+            border-top: 3px solid #e2e8f0;
+            padding-top: 30px;
+        }
+        .chart-container {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+        }
+        .chart-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .score-text { color: var(--primary); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Kwestionariusz PBQ</h1>
+    <p class="intro">
+        Odpowiedz na 126 pytań.<br>
+        Skala: <strong>0</strong> (Wcale nie wierzę) do <strong>4</strong> (Całkowicie wierzę).
+    </p>
+
+    <form id="pbqForm">
+        <div id="questions-list"></div>
+    </form>
+    
+    <div id="error-box" style="color:red; text-align:center; display:none; margin-top:20px;">
+        Uzupełnij wszystkie odpowiedzi!
+    </div>
+
+    <button id="calc-btn" onclick="calculatePBQ()">Oblicz Wynik i Pokaż Wykresy</button>
+
+    <div id="results-section">
+        <h2 style="text-align:center;">Twój Profil Osobowości</h2>
+        <div id="charts-area"></div>
+    </div>
+</div>
+
+<script>
+    // 1. Baza danych pytań (wyciągnięte z Twojego PDF)
+    const rawQuestions = [
+        "Jestem nieudolny/a społecznie i niepożądany/a w sytuacjach zawodowych lub towarzyskich.",
+        "Inni ludzie są potencjalnie krytyczni, obojętni, poniżający lub odrzucający.",
+        "Nie potrafię znieść nieprzyjemnych uczuć.",
+        "Jeśli ludzie zbliżą się do mnie, odkryją moje prawdziwe ja i odrzucą mnie.",
+        "Zostanie zdemaskowanym jako osoba gorsza lub niekompetentna byłoby nie do zniesienia.",
+        "Powinienem/powinnam unikać nieprzyjemnych sytuacji za wszelką cenę.",
+        "Jeśli czuję lub myślę coś nieprzyjemnego, powinienem spróbować to wymazać lub odwrócić uwagę.",
+        "Powinienem/powinnam unikać sytuacji, w których przyciągam uwagę.",
+        "Nieprzyjemne uczucia będą narastać i wymkną się spod kontroli.",
+        "Jeśli inni mnie krytykują, to muszą mieć rację.",
+        "Lepiej nie robić nic, niż próbować czegoś, co może się nie udać.",
+        "Jeśli nie myślę o problemie, to nie muszę nic z nim robić.",
+        "Jakiekolwiek oznaki napięcia w relacji oznaczają, że psuje się ona; dlatego powinienem ją zerwać.",
+        "Jeśli zignoruję problem, to on sam zniknie.", // 14 - Koniec Unikającej
+        "Jestem osobą potrzebującą pomocy i słabą.",
+        "Potrzebuję kogoś w pobliżu, kto byłby dostępny w każdej chwili, aby pomóc.",
+        "Mój opiekun/pomocnik może być opiekuńczy, wspierający i pewny siebie - jeśli tylko tego chce.",
+        "Jestem bezradny/a, gdy zostaję sam/a.",
+        "W gruncie rzeczy jestem sam/a - chyba że uda mi się związać z silniejszą osobą.",
+        "Najgorszą możliwą rzeczą byłoby zostanie porzuconym.",
+        "Jeśli nie będę kochany/a, zawsze będę nieszczęśliwy/a.",
+        "Nie wolno mi zrobić niczego, co mogłoby urazić mojego opiekuna.",
+        "Muszę być uległy/a, aby zachować jego lub jej przychylność.",
+        "Muszę mieć zapewniony dostęp do niego lub niej w każdym momencie.",
+        "Powinienem/powinnam pielęgnować tak bliską i intymną relację, jak to tylko możliwe.",
+        "Nie potrafię samodzielnie podejmować decyzji.",
+        "Nie radzę sobie tak dobrze, jak inni ludzie.",
+        "Potrzebuję innych, aby pomagali mi podejmować decyzje.", // 28 - Koniec Zależnej
+        "Jestem samowystarczalny/a, ale potrzebuję innych, aby pomogli mi osiągnąć moje cele.",
+        "Jedynym sposobem na zachowanie szacunku jest zaznaczanie obecności pośrednio (np. nie wykonując poleceń dokładnie).",
+        "Lubię być związany/a z ludźmi, ale nie chcę płacić za to ceny w postaci bycia zdominowanym.",
+        "Osoby mające władzę mają tendencję do bycia wścibskimi i kontrolującymi.",
+        "Muszę opierać się dominacji autorytetów, ale dbać o ich aprobatę.",
+        "Bycie kontrolowanym lub dominowanym przez innych jest nie do zniesienia.",
+        "Muszę robić rzeczy po swojemu.",
+        "Dotrzymywanie terminów i spełnianie żądań to cios w moją dumę.",
+        "Jeśli będę przestrzegać zasad, ograniczy to moją wolność.",
+        "Najlepiej jest nie wyrażać złości bezpośrednio, lecz okazywać niezadowolenie przez niedostosowanie.",
+        "Wiem, co jest dla mnie najlepsze, a inni nie powinni mi mówić, co mam robić.",
+        "Zasady są arbitralne i mnie dławią.",
+        "Inni ludzie są często zbyt wymagający.",
+        "Jeśli uważam kogoś za zbyt władczego, mam prawo lekceważyć jego żądania.", // 42 - Koniec Bier-Agr
+        "Jestem w pełni odpowiedzialny/a za siebie i innych.",
+        "Muszę polegać na sobie, aby mieć pewność, że sprawy zostaną doprowadzone do końca.",
+        "Inni bywają zbyt beztroscy, nieodpowiedzialni lub niekompetentni.",
+        "Ważne jest, aby każdą pracę wykonywać perfekcyjnie.",
+        "Potrzebuję porządku, systemów i zasad, aby właściwie wykonać zadanie.",
+        "Jeśli nie będę mieć systemów, wszystko się rozpadnie.",
+        "Każda wada lub błąd w wykonaniu zadania może doprowadzić do katastrofy.",
+        "Przez cały czas należy trzymać się najwyższych standardów.",
+        "Muszę mieć całkowitą kontrolę nad swoimi emocjami.",
+        "Ludzie powinni robić rzeczy po mojemu.",
+        "Jeśli nie będę działać na najwyższym poziomie, poniosę porażkę.",
+        "Wady, defekty lub błędy są nie do przyjęcia.",
+        "Szczegóły są niezwykle ważne.",
+        "Mój sposób robienia rzeczy jest zazwyczaj najlepszy.", // 56 - Koniec Obs-Komp
+        "Muszę dbać przede wszystkim o własny interes.",
+        "Siła lub spryt to najlepsze sposoby na załatwianie spraw.",
+        "Żyjemy w dżungli i przetrwa tylko silny.",
+        "Ludzie mnie dopadną, jeśli ja nie dopadnę ich pierwszy.",
+        "Dotrzymywanie obietnic czy spłacanie długów nie jest ważne.",
+        "Kłamanie i oszukiwanie jest w porządku, dopóki nie dasz się złapać.",
+        "Potraktowano mnie niesprawiedliwie, więc mam prawo dochodzić swego wszelkimi środkami.",
+        "Inni ludzie są słabi i zasługują na to, by ich wykorzystać.",
+        "Jeśli nie będę popychać innych, to inni będą popychać mnie.",
+        "Powinienem robić wszystko, co tylko może mi ujść na sucho.",
+        "To, co myślą o mnie inni, nie ma większego znaczenia.",
+        "Jeśli czegoś chcę, powinienem zrobić wszystko, by to zdobyć.",
+        "Potrafię uniknąć kary, więc nie muszę się martwić o konsekwencje.",
+        "Jeśli ludzie nie potrafią o siebie zadbać, to ich problem.", // 70 - Koniec Antyspołecznej
+        "Jestem wyjątkową osobą.",
+        "Skoro jestem kimś lepszym, należą mi się specjalne względy.",
+        "Nie muszę przestrzegać zasad, które obowiązują innych ludzi.",
+        "Bardzo ważne jest uzyskanie uznania, pochwał i podziwu.",
+        "Jeśli inni nie szanują mojego statusu, powinni zostać ukarani.",
+        "Inni ludzie powinni zaspokajać moje potrzeby.",
+        "Inni ludzie powinni dostrzegać, jak wyjątkowy/a jestem.",
+        "To nie do zniesienia, jeśli nie otrzymuję tego, co mi się należy.",
+        "Inni ludzie nie zasługują na podziw lub bogactwa, które zdobywają.",
+        "Ludzie nie mają prawa mnie krytykować.",
+        "Potrzeby nikogo innego nie powinny kolidować z moimi własnymi.",
+        "Skoro jestem tak utalentowany/a, ludzie powinni wspierać moją karierę.",
+        "Tylko ludzie tak genialni jak ja są w stanie mnie zrozumieć.",
+        "Mam wszelkie powody, by oczekiwać wielkich rzeczy.",
+        "Jestem interesującą, ekscytującą osobą.",
+        "Aby być szczęśliwym/ą, potrzebuję, by inni poświęcali mi uwagę.", // 86 - Koniec Narcyz
+        "Jeśli nie bawię ludzi ani nie imponuję im, jestem nikim.",
+        "Jeśli nie będę podtrzymywać zainteresowania innych, nie będą mnie lubić.",
+        "Sposobem na zdobycie tego, czego chcę, jest olśniewanie ludzi.",
+        "Jeśli ludzie nie reagują na mnie bardzo pozytywnie, to są do niczego.",
+        "To straszne, gdy ludzie mnie ignorują.",
+        "Powinienem/powinnam być w centrum uwagi.",
+        "Nie muszę wszystkiego przemyśleć - mogę kierować się instynktem.",
+        "Jeśli będę zabawiał/a ludzi, nie zauważą moich słabości.",
+        "Nie potrafię znieść nudy.",
+        "Jeśli mam na coś ochotę, powinienem/powinnam po prostu to zrobić.",
+        "Ludzie zwrócą na mnie uwagę tylko wtedy, gdy będę zachowywać się ekstremalnie.",
+        "Uczucia i intuicja są ważniejsze niż racjonalne myślenie.", // 98 - Koniec Histrioniczna
+        "To, co myślą o mnie inni, nie ma znaczenia.",
+        "To ważne, abym był/a wolny/a i niezależny/a od innych.",
+        "Bardziej lubię robić rzeczy sam/a niż z innymi ludźmi.",
+        "W wielu sytuacjach lepiej wychodzę na tym, gdy zostawia się mnie w spokoju.",
+        "Inni nie mają wpływu na to, co decyduję się robić.",
+        "Bliskie relacje z innymi ludźmi nie są dla mnie ważne.",
+        "Sam/a wyznaczam sobie własne standardy i cele.",
+        "Moja prywatność jest dla mnie znacznie ważniejsza niż bliskość z ludźmi.",
+        "To, co myślą inni, nie ma dla mnie znaczenia.",
+        "Potrafię poradzić sobie sam/a, bez niczyjej pomocy.",
+        "Lepiej być samym niż czuć się uwięzionym z innymi ludźmi.",
+        "Nie powinienem/powinnam zwierzać się innym.",
+        "Mogę wykorzystywać innych do własnych celów, dopóki nie angażuję się w relację.",
+        "Relacje są kłopotliwe i ograniczają wolność.", // 112 - Koniec Schizoidalna
+        "Nie mogę ufać innym ludziom.",
+        "Inni ludzie mają ukryte motywy.",
+        "Inni będą próbowali mnie wykorzystać, jeśli nie będę uważać.",
+        "Muszę mieć się na baczności przez cały czas.",
+        "Zwierzanie się innym ludziom nie jest bezpieczne.",
+        "Jeśli ludzie zachowują się przyjaźnie, mogą próbować mnie wykorzystać.",
+        "Ludzie wykorzystają mnie, jeśli tylko dam im na to szansę.",
+        "W przeważającej mierze inni ludzie są nieprzyjaźni.",
+        "Inni ludzie będą celowo próbowali mnie poniżyć.",
+        "Często ludzie celowo chcą mnie irytować/denerwować.",
+        "Będę w tarapatach, jeśli pozwolę innym myśleć, że mogą mnie źle traktować.",
+        "Jeśli inni ludzie dowiedzą się czegoś o mnie, wykorzystają to przeciwko mnie.",
+        "Ludzie często mówią jedno, a myślą co innego.",
+        "Osoba, z którą jestem blisko, mogłaby okazać się nielojalna." // 126 - Koniec Paranoiczna
+    ];
+
+    // 2. Konfiguracja Kategorii (Twoje zakresy)
+    const categoriesConfig = [
+        { name: "Osobowość Unikająca", start: 1, end: 14 },
+        { name: "Osobowość Zależna", start: 15, end: 28 },
+        { name: "Osobowość Bierna-Agresywna", start: 29, end: 42 },
+        { name: "Osobowość Obsesyjno-Kompulsyjna", start: 43, end: 56 },
+        { name: "Osobowość Antyspołeczna", start: 57, end: 70 },
+        { name: "Osobowość Narcystyczna", start: 71, end: 86 }, // 16 pytań
+        { name: "Osobowość Histrioniczna", start: 87, end: 98 }, // 12 pytań
+        { name: "Osobowość Schizoidalna", start: 99, end: 112 },
+        { name: "Osobowość Paranoiczna", start: 113, end: 126 }
+    ];
+
+    // Funkcja pomocnicza: Znajdź kategorię dla numeru pytania
+    function getCategoryForIndex(idx) {
+        const questionNum = idx + 1;
+        return categoriesConfig.find(c => questionNum >= c.start && questionNum <= c.end);
+    }
+
+    // Generowanie HTML pytań
+    const listDiv = document.getElementById('questions-list');
+    
+    rawQuestions.forEach((text, idx) => {
+        const qNum = idx + 1;
+        const cat = getCategoryForIndex(idx);
+        
+        const item = document.createElement('div');
+        item.className = 'question-item';
+        item.innerHTML = `
+            <div class="question-text">${qNum}. ${text} <br><small style="color:#94a3b8; font-weight:normal;"></small></div>
+            <div class="options-grid">
+                ${[0, 1, 2, 3, 4].map(val => `
+                    <label class="option-label">
+                        <input type="radio" name="q${idx}" value="${val}">
+                        <div class="scale-val">${val}</div>
+                        <div class="scale-desc">
+                            ${val === 0 ? 'Wcale' : val === 4 ? 'Całkowicie' : ''}
+                        </div>
+                    </label>
+                `).join('')}
+            </div>
+        `;
+        listDiv.appendChild(item);
+    });
+
+    function calculatePBQ() {
+        // Reset błędów
+        document.getElementById('error-box').style.display = 'none';
+        
+        // Zmienne na wyniki
+        let scores = {};
+        categoriesConfig.forEach(c => {
+            scores[c.name] = { current: 0, max: 0, count: 0 };
+        });
+
+        let allAnswered = true;
+
+        // Zbieranie danych
+        rawQuestions.forEach((_, idx) => {
+            const selected = document.querySelector(`input[name="q${idx}"]:checked`);
+            if (!selected) {
+                allAnswered = false;
+                return;
+            }
+            const points = parseInt(selected.value);
+            const cat = getCategoryForIndex(idx);
+            
+            scores[cat.name].current += points;
+            scores[cat.name].max += 4; // Max 4 pkt za pytanie
+            scores[cat.name].count += 1;
+        });
+
+        if (!allAnswered) {
+            document.getElementById('error-box').style.display = 'block';
+            alert("Proszę odpowiedzieć na wszystkie 126 pytań przed obliczeniem wyniku.");
+            return;
+        }
+
+        renderCharts(scores);
+    }
+
+    function renderCharts(scores) {
+        const area = document.getElementById('charts-area');
+        area.innerHTML = '';
+        document.getElementById('results-section').style.display = 'block';
+        document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+
+        categoriesConfig.forEach(catConf => {
+            const name = catConf.name;
+            const data = scores[name];
+            
+            // Kontener na wykres
+            const container = document.createElement('div');
+            container.className = 'chart-container';
+            
+            const percentage = Math.round((data.current / data.max) * 100);
+            
+            // Kolor paska w zależności od wyniku (prosta interpretacja wizualna)
+            let color = '#22c55e'; // Zielony (niski)
+            if (percentage > 40) color = '#eab308'; // Żółty (średni)
+            if (percentage > 70) color = '#ef4444'; // Czerwony (wysoki)
+
+            container.innerHTML = `
+                <div class="chart-title">
+                    <span>${name}</span>
+                    <span class="score-text">${data.current} / ${data.max} pkt (${percentage}%)</span>
+                </div>
+                <canvas id="chart-${catConf.start}"></canvas>
+            `;
+            area.appendChild(container);
+
+            // Rysowanie wykresu Chart.js
+            const ctx = container.querySelector('canvas').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Twój Wynik'],
+                    datasets: [{
+                        label: 'Zdobyte punkty',
+                        data: [data.current],
+                        backgroundColor: color,
+                        borderRadius: 5,
+                        barThickness: 30
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // Poziomy wykres
+                    responsive: true,
+                    scales: {
+                        x: {
+                            min: 0,
+                            max: data.max, // Skala zawsze do max możliwych punktów
+                            title: { display: true, text: 'Punkty' }
+                        },
+                        y: { display: false } // Ukryj etykietę Y bo jest w tytule
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: true }
+                    }
+                }
+            });
+        });
+    }
+</script>
+
+</body>
+</html>
