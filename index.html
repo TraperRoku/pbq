@@ -8,136 +8,250 @@
     <style>
         :root {
             --primary: #2563eb;
-            --bg: #f8fafc;
+            --primary-dark: #1d4ed8;
+            --bg: #f1f5f9;
             --card: #ffffff;
             --text: #1e293b;
+            --accent: #3b82f6;
         }
         body {
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: var(--text);
             margin: 0;
             padding: 20px;
             line-height: 1.6;
+            min-height: 100vh;
         }
         .container {
-            max-width: 800px;
+            max-width: 850px;
             margin: 0 auto;
             background: var(--card);
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
-        h1 { text-align: center; color: var(--text); margin-bottom: 10px; }
-        p.intro { text-align: center; color: #64748b; margin-bottom: 40px; }
+        h1 { 
+            text-align: center; 
+            color: var(--primary); 
+            margin-bottom: 15px;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        h3 {
+            text-align: center;
+            color: #475569;
+            font-weight: 600;
+            line-height: 1.8;
+            background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin: 30px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        p.intro { 
+            text-align: center; 
+            color: #64748b; 
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
         
         .question-item {
-            margin-bottom: 25px;
-            padding: 15px;
-            background: #fff;
-            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(to right, #ffffff 0%, #f8fafc 100%);
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .question-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         .question-text {
-            font-size: 1.05rem;
-            font-weight: 500;
-            margin-bottom: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 18px;
+            color: var(--text);
         }
         .options-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
+            gap: 12px;
         }
         .option-label {
             display: flex;
             flex-direction: column;
             align-items: center;
             cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .option-label:hover {
+            transform: scale(1.05);
         }
         .scale-val {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #f1f5f9;
-            border-radius: 8px;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border-radius: 12px;
             font-weight: bold;
-            transition: all 0.2s;
-            border: 2px solid transparent;
+            font-size: 1.3rem;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         input[type="radio"] { display: none; }
         input[type="radio"]:checked + .scale-val {
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
             border-color: var(--primary);
-            transform: scale(1.1);
+            transform: scale(1.15);
+            box-shadow: 0 4px 15px rgba(37,99,235,0.4);
         }
         .scale-desc {
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             text-align: center;
-            margin-top: 4px;
+            margin-top: 6px;
             color: #64748b;
+            font-weight: 500;
         }
 
         button#calc-btn {
             display: block;
             width: 100%;
-            padding: 20px;
-            background: #0f172a;
+            padding: 22px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             color: white;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
+            font-weight: 700;
             border: none;
-            border-radius: 12px;
+            border-radius: 15px;
             cursor: pointer;
-            margin-top: 40px;
-            transition: background 0.3s;
+            margin-top: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        button#calc-btn:hover { background: #334155; }
+        button#calc-btn:hover { 
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+        }
+        button#calc-btn:active {
+            transform: translateY(-1px);
+        }
 
-        /* Sekcja wyników */
         #results-section {
             display: none;
-            margin-top: 50px;
-            border-top: 3px solid #e2e8f0;
-            padding-top: 30px;
+            margin-top: 60px;
+            border-top: 4px solid var(--primary);
+            padding-top: 40px;
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #results-section h2 {
+            text-align: center;
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 40px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
         .chart-container {
-            margin-bottom: 30px;
-            padding: 20px;
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
+            margin-bottom: 35px;
+            padding: 25px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+        .chart-container:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(0,0,0,0.12);
         }
         .chart-title {
-            font-weight: bold;
-            margin-bottom: 10px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
         }
-        .score-text { color: var(--primary); }
+        .score-text { 
+            color: var(--primary); 
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        #error-box {
+            color: #ef4444;
+            text-align: center;
+            display: none;
+            margin-top: 25px;
+            padding: 15px;
+            background: #fee2e2;
+            border-radius: 10px;
+            border: 2px solid #fca5a5;
+            font-weight: 600;
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 10px; }
+            .container { padding: 25px; }
+            h1 { font-size: 1.8rem; }
+            h3 { font-size: 0.95rem; padding: 20px; }
+            .options-grid { gap: 8px; }
+            .scale-val { 
+                width: 40px; 
+                height: 40px;
+                font-size: 1.1rem;
+            }
+            .scale-desc { font-size: 0.65rem; }
+            button#calc-btn { 
+                font-size: 1.1rem; 
+                padding: 18px;
+            }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Kwestionariusz PBQ</h1>
+    <h1>📋 Kwestionariusz PBQ</h1>
     <p class="intro">
-        Odpowiedz na 126 pytań.<br>
-        Skala: <strong>0</strong> (Wcale nie wierzę) do <strong>4</strong> (Całkowicie wierzę).
+        Spróbuj ocenić, jak czujesz się w związku z każdym zdaniem <strong>PRZEZ WIĘKSZOŚĆ CZASU</strong><br>
+        <strong>JAK BARDZO W TO WIERZYSZ?</strong>
     </p>
-
+    <h3>
+        Skala:<br> 
+        <strong>4 (Całkowicie się z tym zgadzam)</strong><br>
+        <strong>3 (Mocno się z tym zgadzam)</strong><br>
+        <strong>2 (Umiarkowanie się zgadzam)</strong><br>
+        <strong>1 (Słabo się zgadzam)</strong><br>
+        <strong>0 (Wcale się nie zgadzam)</strong>
+    </h3>
     <form id="pbqForm">
         <div id="questions-list"></div>
     </form>
     
-    <div id="error-box" style="color:red; text-align:center; display:none; margin-top:20px;">
-        Uzupełnij wszystkie odpowiedzi!
+    <div id="error-box">
+        ⚠️ Uzupełnij wszystkie odpowiedzi przed obliczeniem wyniku!
     </div>
 
-    <button id="calc-btn" onclick="calculatePBQ()">Oblicz Wynik i Pokaż Wykresy</button>
+    <button id="calc-btn" onclick="calculatePBQ()">📊 Oblicz Wynik i Zobacz Wyniki</button>
 
     <div id="results-section">
-        <h2 style="text-align:center;">Twój Profil Osobowości</h2>
+        <h2>🎯 Twój Profil Osobowości</h2>
         <div id="charts-area"></div>
     </div>
 </div>
@@ -286,30 +400,26 @@
         { name: "Osobowość Paranoiczna", start: 113, end: 126 }
     ];
 
-    // Funkcja pomocnicza: Znajdź kategorię dla numeru pytania
-    function getCategoryForIndex(idx) {
+ function getCategoryForIndex(idx) {
         const questionNum = idx + 1;
         return categoriesConfig.find(c => questionNum >= c.start && questionNum <= c.end);
     }
 
-    // Generowanie HTML pytań
     const listDiv = document.getElementById('questions-list');
     
     rawQuestions.forEach((text, idx) => {
         const qNum = idx + 1;
-        const cat = getCategoryForIndex(idx);
-        
         const item = document.createElement('div');
         item.className = 'question-item';
         item.innerHTML = `
-            <div class="question-text">${qNum}. ${text} <br><small style="color:#94a3b8; font-weight:normal;"></small></div>
+            <div class="question-text">${qNum}. ${text}</div>
             <div class="options-grid">
                 ${[4,3,2,1,0].map(val => `
                     <label class="option-label">
                         <input type="radio" name="q${idx}" value="${val}">
                         <div class="scale-val">${val}</div>
                         <div class="scale-desc">
-                            ${val === 0 ? 'Wcale' : val === 4 ? 'Całkowicie' : ''}
+                            ${val === 0 ? 'Wcale' : val === 4 ? 'Całkowicie' : val === 1 ? 'Słabo' : val === 2 ? 'Umiarkowanie' : 'Mocno'}
                         </div>
                     </label>
                 `).join('')}
@@ -319,10 +429,8 @@
     });
 
     function calculatePBQ() {
-        // Reset błędów
         document.getElementById('error-box').style.display = 'none';
         
-        // Zmienne na wyniki
         let scores = {};
         categoriesConfig.forEach(c => {
             scores[c.name] = { current: 0, max: 0, count: 0 };
@@ -330,7 +438,6 @@
 
         let allAnswered = true;
 
-        // Zbieranie danych
         rawQuestions.forEach((_, idx) => {
             const selected = document.querySelector(`input[name="q${idx}"]:checked`);
             if (!selected) {
@@ -341,7 +448,7 @@
             const cat = getCategoryForIndex(idx);
             
             scores[cat.name].current += points;
-            scores[cat.name].max += 4; // Max 4 pkt za pytanie
+            scores[cat.name].max += 4;
             scores[cat.name].count += 1;
         });
 
@@ -360,20 +467,20 @@
         document.getElementById('results-section').style.display = 'block';
         document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
 
-        categoriesConfig.forEach(catConf => {
+        const categoryColors = [
+            '#ef4444', '#f59e0b', '#eab308', '#84cc16', 
+            '#10b981', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef'
+        ];
+
+        categoriesConfig.forEach((catConf, index) => {
             const name = catConf.name;
             const data = scores[name];
             
-            // Kontener na wykres
             const container = document.createElement('div');
             container.className = 'chart-container';
             
             const percentage = Math.round((data.current / data.max) * 100);
-            
-            // Kolor paska w zależności od wyniku (prosta interpretacja wizualna)
-            let color = '#22c55e'; // Zielony (niski)
-            if (percentage > 40) color = '#eab308'; // Żółty (średni)
-            if (percentage > 70) color = '#ef4444'; // Czerwony (wysoki)
+            const color = categoryColors[index];
 
             container.innerHTML = `
                 <div class="chart-title">
@@ -384,7 +491,6 @@
             `;
             area.appendChild(container);
 
-            // Rysowanie wykresu Chart.js
             const ctx = container.querySelector('canvas').getContext('2d');
             new Chart(ctx, {
                 type: 'bar',
@@ -394,24 +500,31 @@
                         label: 'Zdobyte punkty',
                         data: [data.current],
                         backgroundColor: color,
-                        borderRadius: 5,
-                        barThickness: 30
+                        borderRadius: 8,
+                        barThickness: 40
                     }]
                 },
                 options: {
-                    indexAxis: 'y', // Poziomy wykres
+                    indexAxis: 'y',
                     responsive: true,
                     scales: {
                         x: {
                             min: 0,
-                            max: data.max, // Skala zawsze do max możliwych punktów
-                            title: { display: true, text: 'Punkty' }
+                            max: data.max,
+                            title: { display: true, text: 'Punkty', font: { size: 14, weight: 'bold' } },
+                            grid: { color: '#e2e8f0' }
                         },
-                        y: { display: false } // Ukryj etykietę Y bo jest w tytule
+                        y: { display: false }
                     },
                     plugins: {
                         legend: { display: false },
-                        tooltip: { enabled: true }
+                        tooltip: { 
+                            enabled: true,
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            padding: 12,
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 13 }
+                        }
                     }
                 }
             });
